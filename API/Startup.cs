@@ -13,6 +13,7 @@ namespace API
 {
     public class Startup
     {
+        readonly string MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -23,10 +24,22 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddDbContext<DataContext>(opt => 
+            services.AddDbContext<DataContext>(opt =>
             {
                 opt.UseSqlite(Configuration.GetConnectionString("DefaultConnection"));
             });
+
+            services.AddCors(options =>
+         {
+             options.AddPolicy(name: MyAllowSpecificOrigins,
+                               builder =>
+                               {
+                                   builder.WithOrigins("http://localhost:3000")
+                                            .AllowAnyHeader()
+                                            .AllowAnyMethod()
+                                            .AllowCredentials();
+                               });
+         });
 
             services.AddControllers();
             services.AddSwaggerGen(c =>
@@ -45,6 +58,8 @@ namespace API
                 app.UseSwaggerUI(c => c.SwaggerEndpoint("/swagger/v1/swagger.json", "API v1"));
             }
 
+            app.UseCors(MyAllowSpecificOrigins);
+
             app.UseHttpsRedirection();
 
             app.UseRouting();
@@ -55,6 +70,7 @@ namespace API
             {
                 endpoints.MapControllers();
             });
+
         }
     }
 }
